@@ -1,0 +1,232 @@
+{
+  "name": "Schedule intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "submit-schedule",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0f0ebfed-4d96-4fd7-8a5d-3dce9a55408b",
+      "name": "Webhook",
+      "webhookId": "a7ce009a-50d3-4504-a721-b699584b0b0d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst { uid, userEmail, tasks } = body;\nconst today = new Date().toISOString().split('T')[0];\n\nreturn tasks.map(t => {\n  const [startHour, endHour] = t.timeRange.split('-').map(Number);\n  return {\n    json: {\n      taskId: `task_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,\n      uid,\n      userEmail,\n      date: today,\n      task: t.task,\n      startHour,\n      endHour,\n      status: 'pending',\n      submittedAt: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "441a8135-cfd8-4ea4-85c2-f0989e74b49c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1fSHWXpytqTPbKyFEUh204odPt1JhTLyrJFt11u9mDpk",
+          "mode": "list",
+          "cachedResultName": "Schedules",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fSHWXpytqTPbKyFEUh204odPt1JhTLyrJFt11u9mDpk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fSHWXpytqTPbKyFEUh204odPt1JhTLyrJFt11u9mDpk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "task_id": "={{ $json.taskId }}",
+            "uid": "={{ $json.uid }}",
+            "uemail": "={{ $json.userEmail }}",
+            "date": "={{ $json.date }}",
+            "task": "={{ $json.task }}",
+            "startHour": "={{ $json.startHour }}",
+            "endHour": "={{ $json.endHour }}",
+            "status": "={{ $json.status }}",
+            "submittedAt": "={{ $json.submittedAt }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "uid",
+              "displayName": "uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "uemail",
+              "displayName": "uemail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "task",
+              "displayName": "task",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "startHour",
+              "displayName": "startHour",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "endHour",
+              "displayName": "endHour",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submittedAt",
+              "displayName": "submittedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "948457bf-b372-4b83-8a89-95f30f5a9546",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cNMoVJ37BLVgf0wh",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"success\": true }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        0
+      ],
+      "id": "3b98db44-57c6-483c-9b14-63a19dff4bbf",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5c04db6a-b04c-420a-ba49-f62fc4791265",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84f0d5f9e9c3407f965098909dd92e84dad9de1a090302ddbebf9bf0941f4030"
+  },
+  "id": "gp66sGZVJZnK34zi",
+  "tags": []
+}

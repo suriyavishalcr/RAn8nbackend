@@ -1,0 +1,245 @@
+{
+  "name": "Active nudge",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 59
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "7afb70d2-122e-462a-a38b-a8f7f02b5303",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1fSHWXpytqTPbKyFEUh204odPt1JhTLyrJFt11u9mDpk",
+          "mode": "list",
+          "cachedResultName": "Schedules",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fSHWXpytqTPbKyFEUh204odPt1JhTLyrJFt11u9mDpk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fSHWXpytqTPbKyFEUh204odPt1JhTLyrJFt11u9mDpk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        16,
+        0
+      ],
+      "id": "b5f07ccc-dd91-4447-a256-3e73eca7b6b0",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cNMoVJ37BLVgf0wh",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code in JavaScript1').item.json.uemail }}",
+        "subject": "=Routine Remainder! ",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        -80
+      ],
+      "id": "2dc109e0-76a6-4df7-ae26-1d9a9b960f23",
+      "name": "Send a message",
+      "webhookId": "4d2dd4a7-2cd6-47cf-809c-51a9f1c9e5d9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vwe2K8Zrd2LN3ieD",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are DayFlow AI, a productivity coach.\n\nThe user {{ $json.userEmail }} has an active task right now:\n\nTask: {{ $json.task }}\nTime block: {{ $json.startHour }}:00 – {{ $json.endHour }}:00\n\nWrite a short motivating nudge email (max 4 lines) addressing them personally.\nReference their exact task name. No generic advice.\nSign off as \"DayFlow AI\".\n\nOnly output the email body. Nothing else.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        432,
+        0
+      ],
+      "id": "71f8acec-15a6-40c2-8750-2180bd343cbc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09140ef6-b87d-4b59-b6db-0962025d6fc0",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "NO_ACTIVE_TASK",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        736,
+        0
+      ],
+      "id": "1dd47fa8-022a-477a-b65c-2ab85a8e90b0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\n// Convert to IST (UTC + 5:30)\nconst istOffset = 5.5 * 60 * 60 * 1000;\nconst ist = new Date(now.getTime() + istOffset);\n\nconst currentHour = ist.getHours() + ist.getMinutes() / 60;\nconst today = ist.toISOString().split('T')[0];\n\nconst tasks = $input.all().map(i => i.json);\n\nconst activeTask = tasks.find(t =>\n  t.date === today &&\n  t.status === 'pending' &&\n  currentHour >= Number(t.startHour) &&\n  currentHour < Number(t.endHour)\n);\n\nif (!activeTask) return [];\n\nreturn [{ json: activeTask }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f0b6f4ea-54b9-4060-96fb-a2e8d93dcd74",
+      "name": "Code in JavaScript1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        432,
+        192
+      ],
+      "id": "1bfd95fc-c4f6-40f1-9b98-9b7dac3b1d1c",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "yUe6pHind7XDBNmR",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ef75a10c-acf6-4538-ab3b-d3ef82da90d0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84f0d5f9e9c3407f965098909dd92e84dad9de1a090302ddbebf9bf0941f4030"
+  },
+  "id": "iPnEkzIeeNyXMRaK",
+  "tags": []
+}
